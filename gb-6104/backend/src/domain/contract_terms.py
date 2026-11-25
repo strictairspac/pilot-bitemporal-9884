@@ -3,12 +3,14 @@ import re
 
 ANCHOR_DAY = date(2026, 11, 1)
 TOKEN = re.compile(r"[A-Z0-9][A-Z0-9-]{0,29}")
+MAX_TRIPS = 5000
+MAX_TERMS = 200
 
 
-def _list(payload, field, keys):
+def _list(payload, field, keys, limit=MAX_TERMS):
     values = payload.get(field)
-    if not isinstance(values, list) or not 1 <= len(values) <= 200:
-        raise ValueError(f"{field} 须有 1–200 行")
+    if not isinstance(values, list) or not 1 <= len(values) <= limit:
+        raise ValueError(f"{field} 须有 1–{limit} 行")
     for value in values:
         if not isinstance(value, dict) or set(value) != set(keys.split()):
             raise ValueError(f"{field} 所需字段为 {keys}")
@@ -47,10 +49,11 @@ def _end(value, start):
 
 
 def parse(payload):
-    trips = _list(payload, "trips", "voyage zone service_date gross_ton")
+    trips = _list(payload, "trips", "voyage zone service_date gross_ton", MAX_TRIPS)
     versions = _list(
         payload, "versions",
         "revision zone valid_from valid_until recorded_from recorded_until rate minimum",
+        MAX_TERMS,
     )
     trips = [
         {

@@ -21,7 +21,9 @@ function signature(review) {
 
 export async function evidencePage(config, user, route) {
   const runs = (await api.runs()).filter(item => item.status === "done");
-  const run = route.id ? await api.run(route.id) : runs[0];
+  // The list projection omits the (possibly 5,000-row) result payload; only the
+  // detail endpoint carries it, so always resolve the selected batch in full.
+  const run = route.id ? await api.run(route.id) : runs.length ? await api.run(runs[0].id) : null;
   if (!run?.result) return el("div", {class: "page"},
     pageHeading(config.modules[3], null), empty("成功执行一个批次后可以查看、签核和下载证据。"),
     el("a", {href: "#runs"}, config.modules[2]));
